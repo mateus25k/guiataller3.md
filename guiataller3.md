@@ -1,160 +1,225 @@
-# Despliegue de un sitio web en Oracle Cloud (OCI) con Nginx y DuckDNS
+# Taller 3: Servidor web con Nginx en Oracle Cloud (OCI)
 
-Práctica de infraestructura: montar una máquina virtual en Oracle Cloud, instalar un servidor web y publicar una página accesible desde internet con un dominio gratuito.
+Publicación de un sitio web estático (HTML + CSS + JavaScript) en una máquina virtual de Oracle Cloud, servido con Nginx y accesible desde internet con un dominio de DuckDNS.
 
-🌐 **Sitio publicado:** http://miwebsi.duckdns.org
+ **Sitio publicado:** http://servertaller3.duckdns.org
 
 ---
 
-## Resumen
+## Datos del despliegue
 
 | Elemento | Valor |
 |---|---|
-| Proveedor | Oracle Cloud Infrastructure (región Brazil East - São Paulo) |
+| Proveedor | Oracle Cloud Infrastructure (Brazil East - São Paulo) |
+| Compartimento | `Infraestructura_y_Cloud` |
+| Nombre de la VM | `Servidor-Nginx-Taller3` |
 | Sistema operativo | Oracle Linux 9 |
-| Nombre de la VM | `mi-web` |
-| Red | VCN `red-infraestructura` / subred pública `subred-web` |
-| IP pública | `163.176.111.62` |
-| IP privada | `10.0.0.244` |
+| Shape | `VM.Standard.E3.Flex` (1 OCPU, 16 GB RAM) |
+| IP pública | `137.131.240.182` |
+| IP privada | `10.0.0.105` |
 | Servidor web | Nginx |
-| Dominio | `miwebsi.duckdns.org` (DuckDNS) |
+| Carpeta del sitio | `/var/www/misitio` |
+| Dominio | `servertaller3.duckdns.org` |
 
 ---
 
-## 1. Crear la máquina virtual
+## 1. Crear la instancia
 
-1. En la consola de OCI ir a **Compute → Instances → Create instance**.
-2. Nombre: `mi-web`.
-3. Imagen: **Oracle Linux 9**.
-4. Red: reutilizar la VCN `red-infraestructura` y la subred pública `subred-web`, con IP pública asignada.
-5. Generar o cargar la llave SSH (queda guardada como `llave-web.key`) y pulsar **Create**.
+En la consola de OCI: **Compute → Instances → Create instance**, con Oracle Linux 9, IP pública y llave SSH (`llave-web1.key`).
 
-Una vez creada, en la pestaña **Networking** se ven la IP pública, la IP privada, la subred y el hostname:
+La instancia aparece en estado **Running** con su IP pública y privada:
 
-![Datos de red de la instancia](imagenes/01-red-instancia.png)
+![Instancia creada en OCI](imagenes/01-instancia-running.png)
 
 ---
 
-## 2. Conectarse por SSH desde Cloud Shell
+## 2. Conexión por SSH desde Cloud Shell
 
-1. Abrir **Cloud Shell** en la consola de OCI.
-2. Subir la llave privada con el menú **Upload** y darle permisos seguros:
+### 2.1 Primer intento (con errores)
+
+Al principio aparecieron varios problemas, que sirvieron para aprender:
+
+- Se usó el nombre de llave equivocado (`llave-web.key`), pero el archivo subido se llamaba `llave-web1.key`.
+- Se intentó entrar con el usuario `ubuntu`, y en Oracle Linux el usuario correcto es **`opc`**.
+- Se ejecutó `sudo dnf install` en la propia Cloud Shell en lugar de en la VM, y falló.
+
+![Errores del primer intento](imagenes/02-errores-ssh.png)
+
+### 2.2 Conexión correcta
+
+Se dieron permisos seguros a la llave y se entró con el usuario `opc`:
 
 ```bash
-chmod 600 ~/llave-web.key
+chmod 600 ~/llave-web1.key
+ssh -i ~/llave-web1.key opc@137.131.240.182
 ```
-
-3. Conectarse (en Oracle Linux el usuario es `opc`):
-
-```bash
-ssh -i ~/llave-web.key opc@163.176.111.62
-```
-
-4. Responder `yes` cuando pregunte si se confía en el host.
-
-![Conexión SSH desde Cloud Shell](imagenes/02-ssh-cloudshell.png)
 
 ---
 
 ## 3. Instalar Nginx y Git
 
+Ya dentro de la VM (el prompt cambia a `[opc@servidor-nginx-taller3 ~]$`):
+
 ```bash
 sudo dnf install -y nginx git
 ```
 
-![Instalación de nginx y git en curso](imagenes/03-instalacion-nginx.png)
-
-Al terminar debe aparecer el mensaje **Complete!**:
-
-![Instalación completada](imagenes/04-instalacion-completa.png)
+![Instalación de nginx y git](imagenes/03-instalacion-nginx-git.png)
 
 ---
 
-## 4. Crear la página web
+## 4. Crear el sitio web
 
-Editar el archivo principal que sirve Nginx:
+### 4.1 Estructura de archivos
 
 ```bash
-sudo nano /usr/share/nginx/html/index.html
+sudo mkdir -p /var/www/misitio
+sudo nano /var/www/misitio/index.html
+sudo nano /var/www/misitio/style.css
+sudo nano /var/www/misitio/script.js
 ```
 
-Estructura de la página: un título "Mi sitio", un menú (Inicio, Servicios, Contacto), una sección por cada apartado con su imagen y un botón **Saludar** que muestra un mensaje con JavaScript.
+El sitio tiene tres archivos:
 
-```html
-<script>
-  function saludar() {
-    document.getElementById("mensaje").textContent = "¡Hola! Bienvenido.";
-  }
-</script>
+| Archivo | Función |
+|---|---|
+| `index.html` | Estructura: encabezado, menú (Inicio, Servicios, Contacto), 3 secciones y pie de página |
+| `style.css` | Estilos y diseño adaptativo |
+| `script.js` | Interactividad con JavaScript |
+
+### 4.2 `index.html`
+
+![Código de index.html](imagenes/04-index-html.png)
+
+### 4.3 `script.js`
+
+Muestra un mensaje en verde con la fecha actual al pulsar el botón:
+
+```javascript
+document.getElementById('miBoton').addEventListener('click', function() {
+    const mensaje = document.getElementById('mensajeJS');
+    mensaje.textContent = "¡Funcionalidad JS ejecutada con éxito! Fecha actual: " + new Date().toLocaleDateString();
+    mensaje.style.color = "green";
+    mensaje.style.fontWeight = "bold";
+});
 ```
 
-![Código de la página en el servidor](imagenes/05-codigo-html.png)
+> **Error común:** al pegar el código JavaScript directamente en la terminal (en vez de dentro de `nano`), Bash lo interpreta como comandos y aparecen errores como `syntax error near unexpected token`. Siempre hay que abrir primero el editor con `sudo nano ...` y pegar el contenido ahí.
+
+### 4.4 Permisos
+
+```bash
+sudo chown -R nginx:nginx /var/www/misitio
+sudo chmod -R 755 /var/www/misitio
+```
 
 ---
 
-## 5. Iniciar Nginx
+## 5. Configurar Nginx
+
+Se creó un archivo de configuración propio para el sitio:
 
 ```bash
-sudo systemctl enable --now nginx
+sudo nano /etc/nginx/conf.d/misitio.conf
 ```
+
+Contenido base:
+
+```nginx
+server {
+    listen 80;
+    server_name servertaller3.duckdns.org;
+
+    root /var/www/misitio;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+Comprobar la sintaxis y reiniciar el servicio:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+La salida debe indicar `syntax is ok` y `test is successful`:
+
+![Prueba de configuración y reinicio de Nginx](imagenes/05-nginx-test-restart.png)
 
 ---
 
-## 6. Verificar el servicio y abrir el puerto 80 en el firewall de la VM
+## 6. Firewall y SELinux
+
+Abrir el puerto 80 (HTTP) en el firewall de la VM:
 
 ```bash
-systemctl is-active nginx
 sudo firewall-cmd --permanent --add-service=http
 sudo firewall-cmd --reload
 ```
 
-Debe responder `active` y luego `success` en los dos comandos de firewall:
+Verificar los archivos del sitio:
 
-![Nginx activo y firewall configurado](imagenes/06-nginx-firewall.png)
+```bash
+ls -l /var/www/misitio/
+```
 
-> **Nota:** además del firewall de la VM, la subred de OCI debe tener una regla de entrada (Ingress) para el puerto 80 en su Security List.
+Si Nginx devuelve error 403 al leer los archivos, SELinux puede estar bloqueando el acceso. Para probar, se puso en modo permisivo:
+
+```bash
+sudo setenforce 0
+sudo systemctl restart nginx
+```
+
+![Historial de comandos: firewall, permisos y SELinux](imagenes/06-firewall-selinux.png)
+
+> **Nota:** además del firewall de la VM, la Security List de la subred en OCI debe tener una regla de entrada (Ingress) para el puerto 80 (TCP, origen `0.0.0.0/0`).
 
 ---
 
-## 7. Probar con la IP pública
-
-Abrir en el navegador:
-
-```
-http://163.176.111.62
-```
-
----
-
-## 8. Configurar el subdominio en DuckDNS
+## 7. Dominio con DuckDNS
 
 1. Iniciar sesión en [duckdns.org](https://www.duckdns.org/).
-2. En **sub domain** escribir `miwebsi` y pulsar **add domain**.
-3. En **current ip** poner la IP pública de la instancia (`163.176.111.62`) y pulsar **update ip**.
-4. Resultado: `miwebsi.duckdns.org` apunta a la VM.
+2. En **sub domain** escribir `servertaller3` y pulsar **add domain**.
+3. En **current ip** poner `137.131.240.182` y pulsar **update ip**.
+
+Resultado: `servertaller3.duckdns.org` apunta a la VM.
 
 ![Dominio configurado en DuckDNS](imagenes/07-duckdns.png)
 
 ---
 
-## 9. Comprobación desde fuera de la red de la VM
+## 8. Comprobación final
 
-Desde un celular con datos móviles (fuera de la red de la VM) abrir:
+Abrir en un navegador (idealmente desde el celular con datos móviles, fuera de la red de la VM):
 
 ```
-http://miwebsi.duckdns.org
+http://servertaller3.duckdns.org
 ```
 
-![Sitio funcionando con el dominio](imagenes/08-sitio-publicado.png)
+![Sitio funcionando](imagenes/08-sitio-publicado.png)
 
 ---
 
 ## Resultado
 
- Sitio web en línea: http://miwebsi.duckdns.org
+ Sitio en línea: http://servertaller3.duckdns.org
+
+## Problemas encontrados y soluciones
+
+| Problema | Causa | Solución |
+|---|---|---|
+| `Permission denied (publickey)` | Usuario o llave incorrectos | Usar `opc` y la llave correcta (`llave-web1.key`) |
+| `sudo: No such file or directory` | Se ejecutó el comando en Cloud Shell, no en la VM | Conectarse primero por SSH |
+| `syntax error near unexpected token` | Código JS pegado en la terminal en vez de en `nano` | Abrir `nano` y pegar ahí |
+| Archivo `index.htmlno` en la carpeta | Error de tipeo al guardar con `nano` | Borrarlo con `sudo rm /var/www/misitio/index.htmlno` |
+| Nginx sin acceso a los archivos | SELinux / permisos | `chown`, `chmod` y `setenforce 0` |
 
 ## Conclusiones
 
-- Se desplegó una VM en OCI con Oracle Linux 9 dentro de una red ya existente.
-- Nginx quedó instalado, habilitado y sirviendo contenido por el puerto 80.
-- Con DuckDNS se asignó un nombre de dominio gratuito a la IP pública, sin comprar dominio.
+- Se desplegó una VM en OCI y se configuró Nginx para servir un sitio propio desde `/var/www/misitio`.
+- Se abrió el puerto 80 y se asoció un dominio gratuito con DuckDNS.
+- Los errores del proceso (usuario, llave, SELinux) ayudaron a entender mejor cómo funciona el acceso y la seguridad en Linux.
