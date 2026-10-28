@@ -29,7 +29,8 @@ En la consola de OCI: **Compute → Instances → Create instance**, con Oracle 
 
 La instancia aparece en estado **Running** con su IP pública y privada:
 
-![Instancia creada en OCI](imagenes/01-instancia-running.png)
+![Instancia creada en OCI]<img width="1368" height="581" alt="image" src="https://github.com/user-attachments/assets/6bafbde6-268d-4770-b31d-539f599362c4" />
+
 
 ---
 
@@ -43,7 +44,8 @@ Al principio aparecieron varios problemas, que sirvieron para aprender:
 - Se intentó entrar con el usuario `ubuntu`, y en Oracle Linux el usuario correcto es **`opc`**.
 - Se ejecutó `sudo dnf install` en la propia Cloud Shell en lugar de en la VM, y falló.
 
-![Errores del primer intento](imagenes/02-errores-ssh.png)
+![Errores del primer intento]<img width="921" height="673" alt="image" src="https://github.com/user-attachments/assets/91b68839-ea21-4759-88f5-d7be61acbe5e" />
+
 
 ### 2.2 Conexión correcta
 
@@ -64,7 +66,8 @@ Ya dentro de la VM (el prompt cambia a `[opc@servidor-nginx-taller3 ~]$`):
 sudo dnf install -y nginx git
 ```
 
-![Instalación de nginx y git](imagenes/03-instalacion-nginx-git.png)
+![Instalación de nginx y git]<img width="1523" height="784" alt="image" src="https://github.com/user-attachments/assets/c5fb12f8-e2a6-4d88-8920-9624a0f80a27" />
+
 
 ---
 
@@ -89,7 +92,8 @@ El sitio tiene tres archivos:
 
 ### 4.2 `index.html`
 
-![Código de index.html](imagenes/04-index-html.png)
+![Código de index.html]<img width="1512" height="805" alt="image" src="https://github.com/user-attachments/assets/55beb520-b81b-4c69-8a1e-64fb48433e8c" />
+
 
 ### 4.3 `script.js`
 
@@ -148,7 +152,8 @@ sudo systemctl restart nginx
 
 La salida debe indicar `syntax is ok` y `test is successful`:
 
-![Prueba de configuración y reinicio de Nginx](imagenes/05-nginx-test-restart.png)
+![Prueba de configuración y reinicio de Nginx]<img width="1050" height="342" alt="image" src="https://github.com/user-attachments/assets/3f497794-63d7-44ff-9466-fed2d42bfe39" />
+
 
 ---
 
@@ -174,7 +179,8 @@ sudo setenforce 0
 sudo systemctl restart nginx
 ```
 
-![Historial de comandos: firewall, permisos y SELinux](imagenes/06-firewall-selinux.png)
+![Historial de comandos: firewall, permisos y SELinux]<img width="921" height="673" alt="image" src="https://github.com/user-attachments/assets/2a64a701-a6f5-4663-89b2-e5949380ca83" />
+
 
 > **Nota:** además del firewall de la VM, la Security List de la subred en OCI debe tener una regla de entrada (Ingress) para el puerto 80 (TCP, origen `0.0.0.0/0`).
 
@@ -188,7 +194,8 @@ sudo systemctl restart nginx
 
 Resultado: `servertaller3.duckdns.org` apunta a la VM.
 
-![Dominio configurado en DuckDNS](imagenes/07-duckdns.png)
+![Dominio configurado en DuckDNS](<img width="1919" height="952" alt="c5" src="https://github.com/user-attachments/assets/84f3f9ec-feb3-4576-9ba9-fa499c1fe541" />
+
 
 ---
 
@@ -200,7 +207,8 @@ Abrir en un navegador (idealmente desde el celular con datos móviles, fuera de 
 http://servertaller3.duckdns.org
 ```
 
-![Sitio funcionando](imagenes/08-sitio-publicado.png)
+![Sitio funcionando]<img width="1919" height="1041" alt="image" src="https://github.com/user-attachments/assets/4206a976-97dc-4379-961b-e9a941ece487" />
+
 
 ---
 
